@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title></title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css?family=Allerta" rel="stylesheet">
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Allerta', Arial, sans-serif;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    background: linear-gradient(to left, #7700aa, #8800ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    text-align: center;
+}
+
+.page {
+    width: 100%;
+    max-width: 600px;
+    padding: 16px;
+}
+
+h2 {
+    margin-bottom: 16px;
+}
+
+.player {
+    background: #eee;
+    border-radius: 8px;
+    padding: 16px;
+    color: #444;
+    margin-bottom: 16px;
+}
+
+audio {
+    width: 100%;
+}
+
+/* Visualizer */
+.visualizer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    height: 140px;
+    width: 100%;
+}
+
+.bar {
+    width: 12px; /* wider bars */
+    height: 5px;
+    background: linear-gradient(to top, #ff00ff, #00ffff);
+    border-radius: 6px;
+    transition: height 0.05s linear;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .visualizer {
+        height: 90px;
+    }
+    .bar {
+        width: 8px;
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<h2>Welcome to Rofa Music Store</h2>
+
+<div class="player">
+    <audio id="audio" controls crossorigin="anonymous">
+        <source src="Manjadi-Mazha.mp3" type="audio/ogg">
+    </audio>
+</div>
+
+<div class="player">
+    <div id="visualizer" class="visualizer"></div>
+</div>
+
+</div>
+
+<script>
+const audio = document.getElementById("audio");
+const visualizer = document.getElementById("visualizer");
+
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContext();
+const analyser = audioCtx.createAnalyser();
+
+analyser.fftSize = 128;
+const bufferLength = analyser.frequencyBinCount;
+const dataArray = new Uint8Array(bufferLength);
+
+// Create bars
+for (let i = 0; i < bufferLength; i++) {
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    visualizer.appendChild(bar);
+}
+
+const bars = document.getElementsByClassName("bar");
+
+// Connect audio
+const source = audioCtx.createMediaElementSource(audio);
+source.connect(analyser);
+analyser.connect(audioCtx.destination);
+
+// Resume audio context on play
+audio.addEventListener("play", () => {
+    if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
+    animate();
+});
+
+function animate() {
+    requestAnimationFrame(animate);
+    analyser.getByteFrequencyData(dataArray);
+
+    const containerHeight = visualizer.clientHeight;
+
+    for (let i = 0; i < bars.length; i++) {
+        const value = dataArray[i] / 255; // normalize 0–1
+        const barHeight = value * containerHeight;
+        bars[i].style.height = barHeight + "px";
+    }
+}
+</script>
+
+</body>
+</html>
